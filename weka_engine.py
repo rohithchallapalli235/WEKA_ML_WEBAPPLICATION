@@ -12,12 +12,41 @@ from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
 
+def get_mushroom_value_mapping():
+    return {
+        'cap-shape': {'b': 'bell', 'c': 'conical', 'x': 'convex', 'f': 'flat', 'k': 'knobbed', 's': 'sunken'},
+        'cap-surface': {'f': 'fibrous', 'g': 'grooves', 'y': 'scaly', 's': 'smooth'},
+        'cap-color': {'n': 'brown', 'b': 'buff', 'c': 'cinnamon', 'g': 'gray', 'r': 'green', 'p': 'pink', 'u': 'purple', 'e': 'red', 'w': 'white', 'y': 'yellow'},
+        'bruises': {'t': 'true', 'f': 'false'},
+        'odor': {'a': 'almond', 'l': 'anise', 'c': 'creosote', 'y': 'fishy', 'f': 'foul', 'm': 'musty', 'n': 'none', 'p': 'pungent', 's': 'spicy'},
+        'gill-attachment': {'a': 'attached', 'f': 'free', 'd': 'descending'},
+        'gill-spacing': {'c': 'close', 'w': 'crowded', 'd': 'distant'},
+        'gill-size': {'b': 'broad', 'n': 'narrow'},
+        'gill-color': {'k': 'black', 'n': 'brown', 'b': 'buff', 'h': 'chocolate', 'g': 'gray', 'r': 'green', 'o': 'orange', 'p': 'pink', 'u': 'purple', 'e': 'red', 'w': 'white', 'y': 'yellow'},
+        'stalk-shape': {'e': 'enlarging', 't': 'tapering'},
+        'stalk-root': {'b': 'bulbous', 'c': 'club', 'u': 'cup', 'e': 'equal', 'z': 'rhizomorphs', 'r': 'rooted'},
+        'stalk-surface-above-ring': {'f': 'fibrous', 'y': 'scaly', 'k': 'silky', 's': 'smooth'},
+        'stalk-surface-below-ring': {'f': 'fibrous', 'y': 'scaly', 'k': 'silky', 's': 'smooth'},
+        'stalk-color-above-ring': {'n': 'brown', 'b': 'buff', 'c': 'cinnamon', 'g': 'gray', 'o': 'orange', 'p': 'pink', 'e': 'red', 'w': 'white', 'y': 'yellow'},
+        'stalk-color-below-ring': {'n': 'brown', 'b': 'buff', 'c': 'cinnamon', 'g': 'gray', 'o': 'orange', 'p': 'pink', 'e': 'red', 'w': 'white', 'y': 'yellow'},
+        'veil-type': {'p': 'partial', 'u': 'universal'},
+        'veil-color': {'n': 'brown', 'o': 'orange', 'w': 'white', 'y': 'yellow'},
+        'ring-number': {'n': 'none', 'o': 'one', 't': 'two'},
+        'ring-type': {'c': 'cobwebby', 'e': 'evanescent', 'f': 'flaring', 'l': 'large', 'n': 'none', 'p': 'pendant', 's': 'sheathing', 'z': 'zone'},
+        'spore-print-color': {'k': 'black', 'n': 'brown', 'b': 'buff', 'h': 'chocolate', 'r': 'green', 'o': 'orange', 'u': 'purple', 'w': 'white', 'y': 'yellow'},
+        'population': {'a': 'abundant', 'c': 'clustered', 'n': 'numerous', 's': 'scattered', 'v': 'several', 'y': 'solitary'},
+        'habitat': {'g': 'grasses', 'l': 'leaves', 'm': 'meadows', 'p': 'paths', 'u': 'urban', 'w': 'waste', 'd': 'woods'},
+        'class': {'e': 'edible', 'p': 'poisonous'}
+    }
+
+
 def parse_arff(content_str):
     lines = content_str.strip().split('\n')
     relation_name = "Dataset"
     attributes = []
     data_lines = []
     in_data = False
+    value_mapping = get_mushroom_value_mapping() if 'mushroom' in content_str.lower() else {}
 
     for line in lines:
         line_clean = line.strip()
@@ -39,6 +68,8 @@ def parse_arff(content_str):
                 if attr_type.startswith('{') and attr_type.endswith('}'):
                     raw_vals = attr_type[1:-1].split(',')
                     nominal_vals = [v.strip().strip('"\'') for v in raw_vals]
+                    if attr_name in value_mapping:
+                        nominal_vals = [value_mapping[attr_name].get(v, v) for v in nominal_vals]
                 attributes.append({
                     'name': attr_name,
                     'type': 'nominal' if nominal_vals else 'numeric',
@@ -53,7 +84,11 @@ def parse_arff(content_str):
         if in_data:
             row = [val.strip().strip('"\'') for val in line_clean.split(',')]
             if len(row) == len(attributes):
-                data_lines.append(row)
+                if value_mapping:
+                    translated_row = [value_mapping[attr['name']].get(val, val) if attr['name'] in value_mapping else val for attr, val in zip(attributes, row)]
+                    data_lines.append(translated_row)
+                else:
+                    data_lines.append(row)
 
     col_names = [attr['name'] for attr in attributes]
     df = pd.DataFrame(data_lines, columns=col_names)

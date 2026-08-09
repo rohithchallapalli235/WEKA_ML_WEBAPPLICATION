@@ -66,8 +66,7 @@ def evaluate():
         )
 
         results["dataset_file"] = filename
-        session["results"] = results
-        return redirect(url_for("show_result"))
+        return render_template("result.html", data=results)
 
     except Exception as e:
         return render_template("index.html", error=f"Error evaluating dataset: {str(e)}")
