@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results - {{ data.algorithm }} Classification</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/tree_visualizer.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/roc_chart.js') }}"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      WEKA ML Web Studio
+    </div>
+    
+    <a href="{{ url_for('index') }}" class="btn-secondary">
+      ← Back to Dashboard
+    </a>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+    
+    <!-- Subtitle Header (Matching Reference Image #2) -->
+    <div class="eval-subtitle">
+      Model build and evaluation time: {{ data.build_time }} seconds · Dataset: {{ data.dataset_file }}
+    </div>
+
+    <!-- Selected Dataset Summary -->
+    <div class="dataset-summary-panel">
+      <div class="dataset-summary-title">Dataset Selection</div>
+      <div class="dataset-summary-content">
+        <div><strong>Selected dataset:</strong> {{ data.dataset_file }}</div>
+        <div><strong>Algorithm used:</strong> {{ data.algorithm }}</div>
+      </div>
+    </div>
+
+    <!-- 4 Metric Cards Row (Matching Reference Image #2) -->
+    <div class="metric-cards-row">
+      
+      <div class="metric-card">
+        <div class="metric-card-label">Accuracy</div>
+        <div class="metric-card-value">{{ data.accuracy }}%</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-label">Weighted F1</div>
+        <div class="metric-card-value">{{ data.weighted_f1 }}</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-label">Kappa statistic</div>
+        <div class="metric-card-value">{{ data.kappa_statistic }}</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-label">Evaluated rows</div>
+        <div class="metric-card-value">{{ data.eval_rows }}</div>
+      </div>
+
+    </div>
+
+    <!-- Decision Structure Visualizer Container (Matching Reference Image #1) -->
+    {% if data.tree_data %}
+    <div class="decision-tree-card">
+      
+      <div class="decision-tree-header">Decision structure</div>
+      <div class="decision-tree-meta" style="text-align: center;">
+        Number of leaves: {{ data.tree_data.num_leaves }} · Tree size: {{ data.tree_data.tree_size }} nodes
+      </div>
+      <div class="tree-caption">Zoom and pan to inspect every branch clearly.</div>
+
+      <!-- Controls Toolbar for Scaling & Zoom -->
+      <div class="tree-toolbar">
+        <button class="tool-btn" onclick="fitTreeToScreen()">🔍 Fit to Screen</button>
+        <button class="tool-btn" onclick="zoomTree(0.15)">➕ Zoom In</button>
+        <button class="tool-btn" onclick="zoomTree(-0.15)">➖ Zoom Out</button>
+      </div>
+
+      <!-- Viewport Container for SVG Tree -->
+      <div id="treeContainer" class="decision-tree-viewport"></div>
+
+    </div>
+    {% endif %}
+
+    <!-- Confusion Matrix & Classification Report Grid -->
+    <div class="form-grid" style="margin-top: 2rem;">
+      
+      <!-- Confusion Matrix -->
+      <div class="glass-panel">
+        <div class="section-title">Confusion Matrix:</div>
+        <div class="matrix-container">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th></th>
+                {% for cls in data.confusion_matrix.classes %}
+                  <th>{{ cls }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in data.confusion_matrix.matrix %}
+                <tr>
+                  <th>{{ data.confusion_matrix.classes[loop.index0] }}</th>
+                  {% for val in row %}
+                    <td class="confusion-cell" data-alpha="{{ 0.15 + (val / 10.0) }}">{{ val }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Classification Report -->
+      <div class="glass-panel">
+        <div class="section-title">Classification Report:</div>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>Support</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cls, metrics in data.classification_report.items() %}
+              {% if cls not in ['accuracy', 'macro avg', 'weighted avg'] %}
+              <tr>
+                <td><strong>{{ cls }}</strong></td>
+                <td>{{ "%.2f"|format(metrics.precision) }}</td>
+                <td>{{ "%.2f"|format(metrics.recall) }}</td>
+                <td>{{ "%.2f"|format(metrics['f1-score']) }}</td>
+                <td>{{ metrics.support }}</td>
+              </tr>
+              {% endif %}
+            {% endfor %}
+            
+            {% if 'macro avg' in data.classification_report %}
+            <tr class="report-summary-row">
+              <td>macro avg</td>
+              <td>{{ "%.2f"|format(data.classification_report['macro avg'].precision) }}</td>
+              <td>{{ "%.2f"|format(data.classification_report['macro avg'].recall) }}</td>
+              <td>{{ "%.2f"|format(data.classification_report['macro avg']['f1-score']) }}</td>
+              <td>{{ data.classification_report['macro avg'].support }}</td>
+            </tr>
+            {% endif %}
+
+            {% if 'weighted avg' in data.classification_report %}
+            <tr class="report-summary-row">
+              <td>weighted avg</td>
+              <td>{{ "%.2f"|format(data.classification_report['weighted avg'].precision) }}</td>
+              <td>{{ "%.2f"|format(data.classification_report['weighted avg'].recall) }}</td>
+              <td>{{ "%.2f"|format(data.classification_report['weighted avg']['f1-score']) }}</td>
+              <td>{{ data.classification_report['weighted avg'].support }}</td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- ROC Curve Section -->
+    <div class="glass-panel">
+      <div class="section-title">ROC Curve:</div>
+      <div class="chart-box">
+        <canvas id="rocCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Complete Raw Output Text -->
+    <div class="glass-panel">
+      <div class="section-title">Complete Output:</div>
+      <div class="output-code-box">{{ data.complete_output }}</div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <a href="{{ url_for('index') }}" class="btn-primary" style="max-width: 250px; text-align: center; text-decoration: none;">
+        ⚡ Run Another Experiment
+      </a>
+    </div>
+
+  </main>
+
+  <script id="result-data" type="application/json">
+    {{ {
+      'roc_curves': data.roc_curves,
+      'tree_data': data.tree_data
+    } | tojson | safe }}
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const rawDataElement = document.getElementById("result-data");
+      let rawData = { roc_curves: [], tree_data: null };
+
+      try {
+        rawData = JSON.parse(rawDataElement.textContent || rawDataElement.innerText || '{}');
+      } catch (err) {
+        console.warn('Failed to parse result JSON data', err);
+      }
+
+      renderRocCanvas(rawData.roc_curves || [], "rocCanvas");
+      if (rawData.tree_data) {
+        renderWekaTree(rawData.tree_data, "treeContainer");
+      }
+
+      document.querySelectorAll('.confusion-cell').forEach(cell => {
+        const alpha = parseFloat(cell.dataset.alpha) || 0.15;
+        cell.style.background = `rgba(14, 165, 233, ${Math.min(0.85, Math.max(0.15, alpha))})`;
+      });
+    });
+  </script>
+
+</body>
+</html>

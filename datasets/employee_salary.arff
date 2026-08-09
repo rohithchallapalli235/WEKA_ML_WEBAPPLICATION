@@ -1,0 +1,37 @@
+@relation Employee_Salary
+
+@attribute Growth {Poor, Average, Good, Excellent}
+@attribute Seed_Variety {HD2967, PBW343, PBW550, HD3086, Lok1}
+@attribute Salary_Tier {Low, Medium, High}
+
+@data
+Poor, HD2967, Low
+Poor, PBW343, Low
+Poor, PBW550, Low
+Poor, HD3086, Low
+Poor, Lok1, Low
+Poor, HD2967, Low
+Average, HD2967, Medium
+Average, PBW343, Medium
+Average, PBW550, Medium
+Average, HD3086, Medium
+Good, HD2967, High
+Good, HD2967, High
+Good, HD2967, High
+Good, PBW343, High
+Good, PBW343, High
+Good, PBW343, High
+Good, PBW550, Medium
+Good, PBW550, Medium
+Good, HD3086, Medium
+Good, HD3086, Medium
+Good, Lok1, High
+Good, Lok1, High
+Excellent, HD2967, High
+Excellent, PBW343, High
+Excellent, PBW550, High
+Excellent, HD3086, High
+Excellent, Lok1, High
+Excellent, HD2967, High
+Excellent, PBW343, High
+Excellent, PBW550, High
