@@ -555,10 +555,19 @@ Total Number of Instances          {len(y_true)}
         row_str = ' '.join([f'{val:>5}' for val in row])
         output_text += f"{row_str} | {class_names[idx]}\n"
 
+    # Provide a capped dataset preview (avoid huge payloads)
+    preview_limit = min(len(df), 500)
+    dataset_preview_rows = df.head(preview_limit).fillna('').astype(str).values.tolist()
+
     return {
         'success': True,
         'algorithm': algo_name,
         'relation_name': relation_name,
+        'attributes': attributes,
+        'dataset_columns': [a['name'] for a in attributes],
+        'dataset_rows': len(df),
+        'dataset_preview': dataset_preview_rows,
+        'dataset_preview_limit': preview_limit,
         'accuracy': round(acc, 1),
         'weighted_f1': w_f1,
         'kappa_statistic': kappa_val,

@@ -510,6 +510,50 @@ select {
   overflow-y: auto;
 }
 
+/* Dataset Preview Table - classic, subtle borders */
+.dataset-preview-table {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.preview-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.preview-table th, .preview-table td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.preview-table thead th {
+  background: #f3f4f6;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.preview-table tbody tr:nth-child(even) {
+  background: #fbfbfd;
+}
+
+.preview-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+.dataset-controls select, .dataset-controls button {
+  font-size: 0.9rem;
+}
+
+/* Small fixed quotation at bottom-right */
+
+
 .action-bar {
   display: flex;
   gap: 1rem;
